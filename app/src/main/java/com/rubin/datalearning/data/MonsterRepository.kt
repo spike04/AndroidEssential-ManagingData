@@ -5,12 +5,11 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
-import android.util.Log
+import android.widget.Toast
 import androidx.annotation.WorkerThread
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.rubin.datalearning.utilities.FileHelper
-import com.rubin.datalearning.utilities.LOG_TAG
 import com.rubin.datalearning.utilities.WEB_SERVICE_URL
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -18,26 +17,35 @@ import com.squareup.moshi.Types
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 class MonsterRepository(val app: Application) {
 
     val monsterData = MutableLiveData<List<Monster>>()
+    private val monsterDao = MonsterDatabase.getDatabase(app).monsterDao()
 
     init {
-        val data = readDataFromCache()
-        if (data.isEmpty()) {
-            refreshDataFromWeb()
-        } else {
-            monsterData.value = data
-            Log.i(LOG_TAG, "Using Local Data")
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = monsterDao.getAll()
+            if (data.isEmpty()) {
+                callWebService()
+            } else {
+                monsterData.postValue(data)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(app, "Using Local Data", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
     @WorkerThread
     suspend fun callWebService() {
         if (networkAvailable()) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(app, "Using Remote Data", Toast.LENGTH_LONG).show()
+            }
             val retrofit = Retrofit.Builder()
                 .baseUrl(WEB_SERVICE_URL)
                 .addConverterFactory(MoshiConverterFactory.create())
@@ -47,7 +55,8 @@ class MonsterRepository(val app: Application) {
             val serviceData = service.getMonsterData().body() ?: emptyList()
 
             monsterData.postValue(serviceData)
-            saveDataToCache(serviceData)
+            monsterDao.deleteAll()
+            monsterDao.insertMonsters(serviceData)
         }
     }
 
