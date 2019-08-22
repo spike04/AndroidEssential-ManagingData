@@ -1,14 +1,14 @@
 package com.rubin.datalearning.ui.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.rubin.datalearning.R
-import com.rubin.datalearning.data.Monster
+import kotlinx.android.synthetic.main.main_fragment.*
 
 class MainFragment : Fragment() {
 
@@ -23,16 +23,16 @@ class MainFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val monster = Monster("Bob", "myFile", "a caption", "a description", .19, 3)
+        viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        viewModel.monsterData.observe(this, Observer {
+            val monsterName = StringBuilder()
+            for (monster in it) {
+                monsterName.append(monster.monsterName).append("\n")
+            }
 
-        Log.i("monsterLogging", monster.toString())
+            message.text = monsterName
+        })
 
         return inflater.inflate(R.layout.main_fragment, container, false)
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
-        // TODO: Use the ViewModel
     }
 }
