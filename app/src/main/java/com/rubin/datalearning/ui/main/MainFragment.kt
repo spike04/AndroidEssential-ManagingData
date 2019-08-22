@@ -8,13 +8,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.rubin.datalearning.R
-import kotlinx.android.synthetic.main.main_fragment.*
+import kotlinx.android.synthetic.main.main_fragment.view.*
 
 class MainFragment : Fragment() {
-
-    companion object {
-        fun newInstance() = MainFragment()
-    }
 
     private lateinit var viewModel: MainViewModel
 
@@ -23,16 +19,20 @@ class MainFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        val view = inflater.inflate(R.layout.main_fragment, container, false)
+
+        view.swipeRefresh.setOnRefreshListener {
+            viewModel.refreshData()
+        }
+
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
         viewModel.monsterData.observe(this, Observer {
-            val monsterName = StringBuilder()
-            for (monster in it) {
-                monsterName.append(monster.monsterName).append("\n")
-            }
-
-            message.text = monsterName
+            val adapter = MainRecyclerAdapter(requireContext(), it)
+            view.recyclerView.adapter = adapter
+            view.swipeRefresh.isRefreshing = false
         })
 
-        return inflater.inflate(R.layout.main_fragment, container, false)
+        return view
     }
 }

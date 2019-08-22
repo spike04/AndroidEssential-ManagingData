@@ -17,7 +17,7 @@ class MonsterRepository(val app: Application) {
     val monsterData = MutableLiveData<List<Monster>>()
 
     init {
-        CoroutineScope(Dispatchers.IO).launch { callWebService() }
+        refreshData()
     }
 
     @WorkerThread
@@ -42,5 +42,9 @@ class MonsterRepository(val app: Application) {
         val networkInfo = connectivityManager.activeNetworkInfo
         return networkInfo?.isConnectedOrConnecting ?: false
 
+    }
+
+    fun refreshData() {
+        CoroutineScope(Dispatchers.IO).launch { callWebService() }
     }
 }
