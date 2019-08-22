@@ -13,7 +13,11 @@ import com.rubin.datalearning.R
 import com.rubin.datalearning.data.Monster
 import kotlinx.android.synthetic.main.monster_grid_item.view.*
 
-class MainRecyclerAdapter(private val context: Context, private val monsters: List<Monster>) :
+class MainRecyclerAdapter(
+    private val context: Context,
+    private val monsters: List<Monster>,
+    val listener: MonsterItemListener
+) :
     RecyclerView.Adapter<MainRecyclerAdapter.ViewHolder>() {
 
     override fun getItemCount() = monsters.count()
@@ -34,6 +38,9 @@ class MainRecyclerAdapter(private val context: Context, private val monsters: Li
             }
             ratingBar.rating = monster.scariness.toFloat()
             Glide.with(context).load(monster.thumbnailUrl).into(monsterImage)
+            itemView.setOnClickListener {
+                listener.onMonsterItemClicked(monster)
+            }
         }
     }
 
@@ -41,5 +48,9 @@ class MainRecyclerAdapter(private val context: Context, private val monsters: Li
         val nameText: TextView = itemView.nameText
         val monsterImage: ImageView = itemView.monsterImage
         val ratingBar: RatingBar = itemView.ratingBar
+    }
+
+    interface MonsterItemListener {
+        fun onMonsterItemClicked(monster: Monster)
     }
 }
